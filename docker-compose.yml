@@ -1,0 +1,11 @@
+version: "3.4"
+
+services:
+  nginx:
+    build: .
+    image: dynamedia/nginx
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 80:80

@@ -198,6 +198,7 @@ RUN mkdir -p /var/log/nginx && \
     mkdir -p /var/www/app && \
     cp /usr/local/nginx/html/* /var/www/app && \
     mkdir -p /etc/nginx/modsecurity.d && \
+    mkdir -p /etc/nginx/conf.d && \
     mkdir -p /var/cache/nginx/standard_cache && \
     mkdir -p /var/cache/nginx/micro_cache && \
     mkdir -p /var/cache/nginx/ngx_pagespeed && \

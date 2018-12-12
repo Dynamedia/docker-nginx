@@ -23,9 +23,8 @@ RUN apt-get update -qq && \
     ssdeep               \
     libgeoip-dev         \
     wget             &&  \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN cd /opt && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    cd /opt && \
     git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
     cd ModSecurity && \
     git submodule init && \
@@ -34,10 +33,9 @@ RUN cd /opt && \
     ./configure && \
     make && \
     make install && \
-    strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so* \
-    && make distclean
-
-RUN cd /opt && \
+    strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so* && \
+    make distclean && \
+    cd /opt && \
     git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git && \
     mkdir -p /copyfrom/usr/local/ && \
     mkdir -p /copyfrom/opt/ModSecurity && \
@@ -103,9 +101,8 @@ RUN apt update && \
         libmaxminddb-dev        \
         mmdb-bin                \
         unzip                   \
-        uuid-dev
-
-RUN cd /opt && \
+        uuid-dev && \
+    cd /opt && \
     git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git && \
     git clone https://github.com/google/ngx_brotli && \
     cd /opt/ngx_brotli && \
@@ -124,9 +121,8 @@ RUN cd /opt && \
     wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
     tar -xzvf ${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
     cp -rf /copyfrom/usr/local/modsecurity /usr/local/modsecurity && \
-    cd /opt
-
-RUN wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && \
+    cd /opt && \
+    wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && \
     tar xvzf /opt/nginx-"$NGINX_VERSION".tar.gz -C /opt && \
     cd /opt/nginx-"$NGINX_VERSION" && \
     ./configure \
@@ -165,11 +161,8 @@ RUN wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && 
         --add-module=/opt/incubator-pagespeed-ngx-${NPS_VERSION}${NPS_TYPE} \
         --with-cc-opt='-g -O2 -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
         --with-ld-opt='-specs=/usr/share/dpkg/no-pie-link.specs -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
-        --with-http_dav_module
-
-
-
-RUN cd /opt/nginx-"$NGINX_VERSION" && \
+        --with-http_dav_module && \
+    cd /opt/nginx-"$NGINX_VERSION" && \
     make && \
     make install && \
     make modules && \

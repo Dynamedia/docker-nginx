@@ -50,7 +50,7 @@ fi
 
 # Create our user & group with the specified details
 mkdir -p /home/$USER_NAME
-chown $USER_UID:$USER_GID /home/$USER_NAME
+chown -R $USER_UID:$USER_GID /home/$USER_NAME
 useradd -u $USER_UID -s /bin/bash -d /home/$USER_NAME -g $USER_GROUP $USER_NAME > /dev/null 2>&1
 
 chown -R $USER_UID:$USER_GID /var/www/app \

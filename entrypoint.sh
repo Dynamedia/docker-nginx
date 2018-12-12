@@ -49,8 +49,9 @@ else
 fi
 
 # Create our user & group with the specified details
-
-useradd -u $USER_UID -s /bin/bash -g $USER_GROUP $USER_NAME > /dev/null 2>&1
+mkdir -p /home/$USER_NAME
+chown $USER_UID:$USER_GID /home/$USER_NAME
+useradd -u $USER_UID -s /bin/bash -d /home/$USER_NAME -g $USER_GROUP $USER_NAME > /dev/null 2>&1
 
 chown -R $USER_UID:$USER_GID /var/www/app \
                              /var/log/nginx \
@@ -177,8 +178,5 @@ if [ "$REMOVE_INITIAL_CONFIG" = "on" ] || [ "$REMOVE_INITIAL_CONFIG" = "enabled"
     rm /etc/nginx/sites-enabled/default.conf
     rm /etc/nginx/sites-enabled/upstream.conf
 fi
-
-
-
 
 exec "$@"

@@ -34,12 +34,37 @@ RUN cd /opt && \
     ./configure && \
     make && \
     make install && \
-    strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so*
+    strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so* \
+    && make distclean
 
 RUN cd /opt && \
-    git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git
-
-
+    git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git && \
+    mkdir -p /copyfrom/usr/local/ && \
+    mkdir -p /copyfrom/opt/ModSecurity && \
+    mkdir -p /copyfrom/opt/owasp-modsecurity-crs && \
+    mv /usr/local/modsecurity /copyfrom/usr/local/ && \
+    mv /opt/ModSecurity/modsecurity.conf-recommended /copyfrom/opt/ModSecurity/modsecurity.conf-recommended && \
+    mv /opt/ModSecurity/unicode.mapping /copyfrom/opt/ModSecurity/unicode.mapping && \
+    mv /opt/owasp-modsecurity-crs/crs-setup.conf.example /copyfrom/opt/owasp-modsecurity-crs/crs-setup.conf.example && \
+    mv /opt/owasp-modsecurity-crs/rules/ /copyfrom/opt/owasp-modsecurity-crs/rules/ && \
+    apt -y purge ca-certificates \
+        automake             \
+        autoconf             \
+        build-essential      \
+        libcurl4-openssl-dev \
+        libpcre++-dev        \
+        libtool              \
+        libxml2-dev          \
+        libyajl-dev          \
+        lua5.2-dev           \
+        git                  \
+        pkgconf              \
+        ssdeep               \
+        libgeoip-dev         \
+        wget                 \
+        *-dev && \
+    apt -y autoremove && \
+    rm -rf /opt*
 
 # Build Nginx
 
@@ -52,32 +77,33 @@ ENV NPS_VERSION 1.13.35.2-
 ENV NPS_TYPE stable
 ENV ARCHITECTURE x64
 
-# Install geoip2 and build prereqs
+COPY --from=modsecurity-build /copyfrom/ /copyfrom/
 
+# Install geoip2 and build prereqs
 RUN apt update && \
     apt install  -qq -y --no-install-recommends --no-install-suggests \
-    ca-certificates \
-    autoconf        \
-    automake        \
-    build-essential \
-    libtool         \
-    pkgconf         \
-    wget            \
-    git             \
-    zlib1g-dev      \
-    libssl-dev      \
-    libpcre3-dev    \
-    libxml2-dev     \
-    libyajl-dev     \
-    lua5.2-dev      \
-    libgeoip-dev    \
-    libcurl4-openssl-dev    \
-    openssl \
-    libmaxminddb0 \
-    libmaxminddb-dev \
-    mmdb-bin \
-    unzip \
-    uuid-dev
+        ca-certificates         \
+        autoconf                \
+        automake                \
+        build-essential         \
+        libtool                 \
+        pkgconf                 \
+        wget                    \
+        git                     \
+        zlib1g-dev              \
+        libssl-dev              \
+        libpcre3-dev            \
+        libxml2-dev             \
+        libyajl-dev             \
+        lua5.2-dev              \
+        libgeoip-dev            \
+        libcurl4-openssl-dev    \
+        openssl                 \
+        libmaxminddb0           \
+        libmaxminddb-dev        \
+        mmdb-bin                \
+        unzip                   \
+        uuid-dev
 
 RUN cd /opt && \
     git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git && \
@@ -97,9 +123,8 @@ RUN cd /opt && \
     cd incubator-pagespeed-ngx-${NPS_VERSION}${NPS_TYPE} && \
     wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
     tar -xzvf ${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
+    cp -rf /copyfrom/usr/local/modsecurity /usr/local/modsecurity && \
     cd /opt
-
-COPY --from=modsecurity-build /usr/local/modsecurity/ /usr/local/modsecurity/
 
 RUN wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && \
     tar xvzf /opt/nginx-"$NGINX_VERSION".tar.gz -C /opt && \
@@ -142,16 +167,52 @@ RUN wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && 
         --with-ld-opt='-specs=/usr/share/dpkg/no-pie-link.specs -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
         --with-http_dav_module
 
+
+
 RUN cd /opt/nginx-"$NGINX_VERSION" && \
     make && \
     make install && \
-    make modules
+    make modules && \
+    mkdir /etc/nginx/modsecurity.d/ && \
+    mkdir /etc/nginx/conf.d && \
+    mv /opt/mmdb/GeoLite2-City.mmdb /etc/nginx/GeoLite2-City.mmdb && \
+    mv /copyfrom/opt/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsecurity.d/modsecurity.conf && \
+    mv /copyfrom/opt/ModSecurity/unicode.mapping /etc/nginx/modsecurity.d/unicode.mapping && \
+    mv /copyfrom/opt/owasp-modsecurity-crs/crs-setup.conf.example /etc/nginx/modsecurity.d/owasp.conf && \
+    mv /copyfrom/opt/owasp-modsecurity-crs/rules /etc/nginx/modsecurity.d/rules/ && \
+    mv /usr/local/nginx /copyfrom/usr/local/nginx/ && \
+    mkdir -p /copyfrom/etc/ && \
+    mv /etc/nginx /copyfrom/etc/nginx/ && \
+    apt -y purge ca-certificates    \
+        autoconf                    \
+        automake                    \
+        build-essential             \
+        libtool                     \
+        pkgconf                     \
+        wget                        \
+        git                         \
+        zlib1g-dev                  \
+        libssl-dev                  \
+        libpcre3-dev                \
+        libxml2-dev                 \
+        libyajl-dev                 \
+        lua5.2-dev                  \
+        libgeoip-dev                \
+        libcurl4-openssl-dev        \
+        openssl                     \
+        libmaxminddb0               \
+        libmaxminddb-dev            \
+        mmdb-bin                    \
+        unzip                       \
+        uuid-dev                    \
+        *-dev &&                    \
+    apt -y autoremove && \
+    rm -rf /opt*
 
-EXPOSE 80
+COPY ./nginx.conf /copyfrom/etc/nginx/nginx.conf
+COPY ./sites-enabled/ /copyfrom/etc/nginx/sites-enabled/
+COPY ./MMDB_LICENCE /copyfrom/
 
-STOPSIGNAL SIGTERM
-
-CMD ["/usr/local/nginx/nginx", "-g", "daemon off;"]
 
 # Build production container
 
@@ -160,59 +221,42 @@ MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive
 
+COPY --from=nginx-build /copyfrom /copyfrom
+
 # Libraries for ModSecurity
 RUN apt update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
-        ca-certificates \
-        libcurl4-openssl-dev  \
-        libyajl-dev \
-        lua5.2-dev \
-        libgeoip-dev \
-        vim \
-        libxml2 \
-        libmaxminddb0 \
-        libmaxminddb-dev \
-        mmdb-bin && \
+        ca-certificates     \
+        vim                 \
+        curl                \
+        liblua5.2-0         \
+        zlib1g              \
+        libssl1.1           \
+        libpcre3            \
+        libxml2             \
+        libyajl2            \
+        libgeoip1           \
+        libmaxminddb0       \
+        mmdb-bin &&         \
     apt clean && \
-    rm -rf /var/lib/apt/lists/* &&\
-    ldconfig
-
-COPY --from=modsecurity-build /usr/local/modsecurity/ /usr/local/modsecurity/
-
-COPY --from=nginx-build /usr/local/nginx/ /usr/local/nginx/
-
-COPY --from=nginx-build /etc/nginx/ /etc/nginx/
-
-COPY --from=nginx-build /opt/mmdb/GeoLite2-City.mmdb /etc/nginx/GeoLite2-City.mmdb
-
-COPY --from=modsecurity-build /opt/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsecurity.d/modsecurity.conf
-
-COPY --from=modsecurity-build /opt/ModSecurity/unicode.mapping /etc/nginx/modsecurity.d/unicode.mapping
-
-COPY --from=modsecurity-build /opt/owasp-modsecurity-crs/crs-setup.conf.example /etc/nginx/modsecurity.d/owasp.conf
-
-COPY --from=modsecurity-build /opt/owasp-modsecurity-crs/rules /etc/nginx/modsecurity.d/rules
-
-# Create required files and directories
-RUN mkdir -p /var/log/nginx && \
+    rm -rf /var/lib/apt/lists/* && \
+    ldconfig && \
+    mv /copyfrom/usr/local/modsecurity /usr/local/modsecurity && \
+    mv /copyfrom/usr/local/nginx /usr/local/nginx && \
+    mv /copyfrom/etc/nginx /etc/nginx && \
+    mkdir -p /var/log/nginx && \
     mkdir -p /var/www/app && \
-    cp /usr/local/nginx/html/* /var/www/app && \
-    mkdir -p /etc/nginx/modsecurity.d && \
-    mkdir -p /etc/nginx/conf.d && \
     mkdir -p /var/cache/nginx/standard_cache && \
     mkdir -p /var/cache/nginx/micro_cache && \
     mkdir -p /var/cache/nginx/ngx_pagespeed && \
-    mkdir -p /var/log/nginx
-
-COPY ./nginx.conf /etc/nginx/nginx.conf
-
-COPY ./sites-enabled/ /etc/nginx/sites-enabled/
-
-COPY ./MMDB_LICENCE /
-
-RUN echo "Include /etc/nginx/modsecurity.d/owasp.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
+    mv /usr/local/nginx/html/* /var/www/app && \
+    mv /copyfrom/MMDB_LICENCE /MMDB_LICENCE && \
+    echo "Include /etc/nginx/modsecurity.d/owasp.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
     echo "Include /etc/nginx/modsecurity.d/rules/*.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
-    ln -s /usr/local/nginx/nginx /usr/local/bin
+    ln -s /usr/local/nginx/nginx /usr/local/bin && \
+    rm -rf /copyfrom/ && \
+    apt -y purge *-dev && \
+    apt -y autoremove
 
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 

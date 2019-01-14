@@ -5,6 +5,7 @@ USER_GROUP=${USER_GROUP:-www-data}
 USER_UID=${USER_UID:-1001}
 USER_GID=${USER_GID:-1001}
 NGINX_WORKER_PROCESSES="${NGINX_WORKER_PROCESSES:-1}"
+NGINX_WEBROOT="${NGINX_WEBROOT:-/var/www/app}"
 PHP_UPSTREAM_CONTAINER="${PHP_UPSTREAM_CONTAINER:-}"
 PHP_UPSTREAM_PORT="${PHP_UPSTREAM_PORT:-}"
 MODSECURITY_STATUS="${MODSECURITY_STATUS:-off}"
@@ -158,6 +159,8 @@ else
 fi
 
 ## Edit site specific config
+
+sed -i "s#WEBROOT_PLACEHOLDER#$NGINX_WEBROOT#g" /etc/nginx/sites-enabled/default.conf
 
 if [ "$PREFER_WWW" = "on" ] || [ "$PREFER_WWW" = "enabled" ] ; then
     sed -i "s#PREFER_NON_WWW_PLACEHOLDER#\##g" /etc/nginx/sites-enabled/default.conf

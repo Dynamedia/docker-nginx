@@ -1,6 +1,6 @@
 # Build ModSecurity
 
-FROM debian:9-slim as modsecurity-build
+FROM debian:10-slim as modsecurity-build
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 # Install Prereqs
@@ -66,7 +66,7 @@ RUN apt-get update -qq && \
 
 # Build Nginx
 
-FROM debian:9-slim AS nginx-build
+FROM debian:10-slim AS nginx-build
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -209,7 +209,7 @@ COPY ./MMDB_LICENCE /copyfrom/
 
 # Build production container
 
-FROM debian:9-slim
+FROM debian:10-slim
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive

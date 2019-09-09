@@ -3,7 +3,7 @@ version: "3.4"
 services:
   nginx:
     build: .
-    image: dynamedia/docker-nginx:v1.15.8
+    image: dynamedia/docker-nginx:v1.17.3
     env_file:
       - .env
     restart: always

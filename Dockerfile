@@ -1,3 +1,5 @@
+## GeoLite2 database can no longer be included. Download manuallly and mount at /etc/nginx/geoip.mmdb
+
 # Build ModSecurity
 
 FROM debian:10-slim as modsecurity-build
@@ -70,7 +72,7 @@ FROM debian:10-slim AS nginx-build
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV NGINX_VERSION 1.17.3
+ENV NGINX_VERSION 1.19.6
 ENV NPS_VERSION 1.13.35.2-
 ENV NPS_TYPE stable
 ENV ARCHITECTURE x64
@@ -109,11 +111,6 @@ RUN apt update && \
     git submodule update --init --recursive && \
     cd /opt && \
     git clone https://github.com/leev/ngx_http_geoip2_module && \
-    cd /opt && \
-    mkdir mmdb && \
-    cd /opt/mmdb && \
-    wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz && \
-    gunzip GeoLite2-City.mmdb.gz && \
     cd /opt && \
     wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${NPS_VERSION}${NPS_TYPE}.zip && \
     unzip v${NPS_VERSION}${NPS_TYPE}.zip && \
@@ -168,7 +165,6 @@ RUN apt update && \
     make modules && \
     mkdir /etc/nginx/modsecurity.d/ && \
     mkdir /etc/nginx/conf.d && \
-    mv /opt/mmdb/GeoLite2-City.mmdb /etc/nginx/GeoLite2-City.mmdb && \
     mv /copyfrom/opt/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsecurity.d/modsecurity.conf && \
     mv /copyfrom/opt/ModSecurity/unicode.mapping /etc/nginx/modsecurity.d/unicode.mapping && \
     mv /copyfrom/opt/owasp-modsecurity-crs/crs-setup.conf.example /etc/nginx/modsecurity.d/owasp.conf && \
@@ -204,7 +200,6 @@ RUN apt update && \
 
 COPY ./nginx.conf /copyfrom/etc/nginx/nginx.conf
 COPY ./sites-enabled/ /copyfrom/etc/nginx/sites-enabled/
-COPY ./MMDB_LICENCE /copyfrom/
 
 
 # Build production container
@@ -243,7 +238,6 @@ RUN apt update && \
     mkdir -p /var/cache/nginx/micro_cache && \
     mkdir -p /var/cache/nginx/ngx_pagespeed && \
     mv /usr/local/nginx/html/* /var/www/app && \
-    mv /copyfrom/MMDB_LICENCE /MMDB_LICENCE && \
     echo "Include /etc/nginx/modsecurity.d/owasp.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
     echo "Include /etc/nginx/modsecurity.d/rules/*.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
     ln -s /usr/local/nginx/nginx /usr/local/bin && \

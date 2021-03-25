@@ -18,4 +18,4 @@ This image will serve files from /var/www/app on port 80. It is suitable for use
 
 To use alternative configurations simply create your own (eg. nginx.conf, default.conf etc.) and mount them in the correct location.
 
-The pre-built image can be found at https://hub.docker.com/r/dynamedia/nginx/
+The pre-built image can be found at https://hub.docker.com/r/dynamedia/docker-nginx/

@@ -1,21 +1,21 @@
 # Nginx with extra modules
 
-This repository contains the build instructions for nginx with the following modules:
+This repository contains the build instructions for nginx with the following dynamic modules:
 
-ModSecurity (includes the latest OWASP core ruleset)
+ModSecurity (includes the latest OWASP core ruleset) - Default disabled
 
-Geoip2 (includes the maxmind geolite2 city database)
+Headers More - Default enabled
 
-PageSpeed
+Geoip2 (Module support but database cannot be distributed - register, download and mount database to use) - Default disabled
 
-Brotli
+Google PageSpeed - Default disabled
 
-These extra modules are disabled by default but can be enabled and configured using environment variables.
+Google Brotli - Default enabled
 
-Please review .env-example and entrypoint.sh to see available options and their defaults.
+Dynamic modules can be enabled or disabled by required
 
-This image will, by default, serve files from /var/www/app on port 80 only.
+This image will serve files from /var/www/app on port 80. It is suitable for use as or behind a reverse proxy.
 
-The initial site configuration is at /etc/nginx/sites-available/default.conf. This can be deleted on startup via environment variables but take care when using mounts. It's configured this way because the default configuration will cause problems if using the image in conjunction with third party configuration managers such as docker-gen and the letsencrypt companion (for reverse proxying).
+To use alternative configurations simply create your own (eg. nginx.conf, default.conf etc.) and mount them in the correct location.
 
 The pre-built image can be found at https://hub.docker.com/r/dynamedia/nginx/

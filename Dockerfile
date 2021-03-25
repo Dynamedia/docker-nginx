@@ -1,5 +1,3 @@
-## GeoLite2 database can no longer be included. Download manuallly and mount at /etc/nginx/geoip.mmdb
-
 # Build ModSecurity
 
 FROM debian:10-slim as modsecurity-build
@@ -26,6 +24,7 @@ RUN apt-get update -qq && \
     libgeoip-dev         \
     wget             &&  \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
+
     cd /opt && \
     git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
     cd ModSecurity && \
@@ -37,6 +36,7 @@ RUN apt-get update -qq && \
     make install && \
     strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so* && \
     make distclean && \
+
     cd /opt && \
     git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git && \
     mkdir -p /copyfrom/usr/local/ && \
@@ -72,7 +72,8 @@ FROM debian:10-slim AS nginx-build
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV NGINX_VERSION 1.19.6
+ENV NGINX_VERSION 1.19.8
+ENV HM_VERSION 0.33
 ENV NPS_VERSION 1.13.35.2-
 ENV NPS_TYPE stable
 ENV ARCHITECTURE x64
@@ -104,13 +105,21 @@ RUN apt update && \
         mmdb-bin                \
         unzip                   \
         uuid-dev && \
+    
     cd /opt && \
     git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git && \
+
     git clone https://github.com/google/ngx_brotli && \
     cd /opt/ngx_brotli && \
-    git submodule update --init --recursive && \
+    git submodule update --init --recursive && \    
+    cd /opt && \
+
+    wget https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${HM_VERSION}.zip && \
+    unzip v${HM_VERSION}.zip && \
+    
     cd /opt && \
     git clone https://github.com/leev/ngx_http_geoip2_module && \
+
     cd /opt && \
     wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${NPS_VERSION}${NPS_TYPE}.zip && \
     unzip v${NPS_VERSION}${NPS_TYPE}.zip && \
@@ -118,6 +127,7 @@ RUN apt update && \
     wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
     tar -xzvf ${NPS_VERSION}${ARCHITECTURE}.tar.gz && \
     cp -rf /copyfrom/usr/local/modsecurity /usr/local/modsecurity && \
+    
     cd /opt && \
     wget -q -P /opt https://nginx.org/download/nginx-"$NGINX_VERSION".tar.gz && \
     tar xvzf /opt/nginx-"$NGINX_VERSION".tar.gz -C /opt && \
@@ -152,14 +162,14 @@ RUN apt update && \
         --with-http_secure_link_module \
         --with-stream \
         --with-stream_realip_module \
-        --add-module=/opt/ModSecurity-nginx \
-        --add-module=/opt/ngx_brotli \
-        --add-module=/opt/ngx_http_geoip2_module \
-        --add-module=/opt/incubator-pagespeed-ngx-${NPS_VERSION}${NPS_TYPE} \
+        --add-dynamic-module=/opt/ModSecurity-nginx \
+        --add-dynamic-module=/opt/ngx_brotli \
+	--add-dynamic-module=/opt/headers-more-nginx-module-${HM_VERSION} \
+        --add-dynamic-module=/opt/ngx_http_geoip2_module \
+        --add-dynamic-module=/opt/incubator-pagespeed-ngx-${NPS_VERSION}${NPS_TYPE} \
         --with-cc-opt='-g -O2 -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
         --with-ld-opt='-specs=/usr/share/dpkg/no-pie-link.specs -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
         --with-http_dav_module && \
-    cd /opt/nginx-"$NGINX_VERSION" && \
     make && \
     make install && \
     make modules && \
@@ -198,9 +208,6 @@ RUN apt update && \
     apt -y autoremove && \
     rm -rf /opt*
 
-COPY ./nginx.conf /copyfrom/etc/nginx/nginx.conf
-COPY ./sites-enabled/ /copyfrom/etc/nginx/sites-enabled/
-
 
 # Build production container
 
@@ -216,6 +223,7 @@ RUN apt update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
         ca-certificates     \
         vim                 \
+        nano                \
         curl                \
         liblua5.2-0         \
         zlib1g              \
@@ -236,6 +244,7 @@ RUN apt update && \
     mkdir -p /var/www/app && \
     mkdir -p /var/cache/nginx/standard_cache && \
     mkdir -p /var/cache/nginx/micro_cache && \
+    mkdir -p /var/cache/nginx/fpm_cache && \
     mkdir -p /var/cache/nginx/ngx_pagespeed && \
     mv /usr/local/nginx/html/* /var/www/app && \
     echo "Include /etc/nginx/modsecurity.d/owasp.conf" >> /etc/nginx/modsecurity.d/modsecurity.conf && \
@@ -244,6 +253,9 @@ RUN apt update && \
     rm -rf /copyfrom/ && \
     apt -y purge *-dev && \
     apt -y autoremove
+
+COPY ./config/default/nginx.conf /etc/nginx/nginx.conf
+COPY ./config/default/sites-enabled /etc/nginx/sites-enabled
 
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 

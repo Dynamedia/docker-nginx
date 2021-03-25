@@ -3,12 +3,15 @@ version: "3.4"
 services:
   nginx:
     build: .
-    image: dynamedia/docker-nginx:v1.19.6
-    env_file:
-      - .env
+    image: dynamedia/docker-nginx:v1.19.8
+    environment:
+      - USER_NAME=www-data
+      - GROUP_NAME=www-data
+      - USER_UID=1000
+      - GROUP_GID=1000
     restart: always
     ports:
-      - 800:80
-    # Get a geoIP2/GeoLite2 database file and name it geoip.mmdb - place it in this directory and uncomment below
-    #volumes:
-    #  - ./geoip.mmdb/:/etc/nginx/geoip.mmdb
+      - 80:80
+   # volumes:
+   #   - ./config/custom/nginx.conf:/etc/nginx/nginx.conf
+   #   - ./geoip.mmdb/:/etc/nginx/geoip.mmdb

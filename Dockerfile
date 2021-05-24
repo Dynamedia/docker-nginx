@@ -72,7 +72,7 @@ FROM debian:10-slim AS nginx-build
 MAINTAINER Rob Ballantyne admin@dynamedia.uk
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV NGINX_VERSION 1.19.8
+ENV NGINX_VERSION 1.20.0
 ENV HM_VERSION 0.33
 ENV NPS_VERSION 1.13.35.2-
 ENV NPS_TYPE stable

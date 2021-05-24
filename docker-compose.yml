@@ -3,7 +3,7 @@ version: "3.4"
 services:
   nginx:
     build: .
-    image: dynamedia/docker-nginx:v1.19.8
+    image: dynamedia/docker-nginx:v1.20.0
     environment:
       - USER_NAME=www-data
       - GROUP_NAME=www-data
